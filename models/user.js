@@ -1,72 +1,71 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const { Model } = require("sequelize");
 
-const userSchema = new Schema(
-  {
-    name: {
-      type: String,
-      required: [true, "Name cannot be blank"],
-    },
-    email: {
-      type: String,
-      required: [true, `Email cannot be blank`],
-      validate: [
-        {
-          validator: function (value) {
-            return /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value);
-          },
-          message: "Email is not valid!",
+module.exports = (sequelize, DataTypes) => {
+  class User extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate(models) {
+      User.hasMany(models.Token, {
+        foreignKey: "userId",
+      });
+      // define association here
+    }
+  }
+
+  User.init(
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
+        primaryKey: true,
+      },
+      name: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+        validate: {
+          isEmail: true,
         },
-      ],
-      unique: true,
+        unique: true,
+      },
+      password: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      isPasswordDefault: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      isVerified: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      lastSession: {
+        type: DataTypes.DATE,
+        defaultValue: Date.now(),
+      },
+      loginTimes: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0,
+      },
+      isOnline: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: false,
+      },
+      avatar: DataTypes.STRING,
     },
-    password: {
-      type: String,
-      select: false,
-      required: [true, `Password cannot be blank`],
-      validate: [
-        {
-          validator: function (value) {
-            let array = [];
+    {
+      sequelize,
+      modelName: "User",
+    }
+  );
 
-            return array;
-          },
-          message: function (props) {
-            let error = [];
-
-            if (props.array[0]) error.push("Must contain uppercase Letter");
-            if (props.array[1]) error.push("Must contain lowercase Letter");
-            if (props.array[2]) error.push("Must contain number");
-            if (props.array[3]) error.push("Must contain special character");
-
-            return error;
-          },
-        },
-      ],
-    },
-    isVerified: {
-      type: Boolean,
-      default: false,
-    },
-    lastSession: {
-      type: Date,
-      default: Date.now(),
-    },
-    loginTimes: {
-      type: Number,
-      default: 0,
-    },
-    registerSource: {
-      type: String,
-      default: "database",
-    },
-    isOnline: {
-      type: Boolean,
-      default: false,
-    },
-  },
-  { timestamps: true, versionKey: false, strict: false }
-);
-
-const User = mongoose.model("User", userSchema);
-module.exports = User;
+  return User;
+};

@@ -1,8 +1,8 @@
 require("dotenv").config();
-require("../../config/mongoose.js");
+const db = require("../../models/index.js");
 
-const User = require("../../models/user.js");
-const Token = require("../../models/token.js");
+const User = db.User;
+const Token = db.Token;
 const { hashPassword } = require("../../helpers/bcrypt.js");
 
 /// <reference types="cypress" />
@@ -26,7 +26,7 @@ const { hashPassword } = require("../../helpers/bcrypt.js");
 module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
-  config.baseUrl = "http://localhost:3000";
+  config.baseUrl = "http://localhost:8080";
   config.pageLoadTimeout = 5000;
 
   config.env.gmailAccount = process.env.GMAIL_ACCOUNT;
@@ -38,17 +38,19 @@ module.exports = (on, config) => {
       return new Promise(async (resolve, reject) => {
         try {
           const findUser = await User.findOne({
-            email: process.env.GMAIL_ACCOUNT,
+            where: {
+              email: process.env.GMAIL_ACCOUNT,
+            },
           });
 
           if (findUser) {
-            findUser.delete();
+            findUser.destroy();
           }
 
           const result = await User.create({
             name: "test",
             email: process.env.GMAIL_ACCOUNT,
-            password: hashPassword("admin"),
+            password: hashPassword("Password123!"),
             isVerified: true,
           });
 
@@ -62,14 +64,22 @@ module.exports = (on, config) => {
       return new Promise(async (resolve, reject) => {
         try {
           const user = await User.findOne({
-            email: process.env.GMAIL_ACCOUNT,
+            where: {
+              email: process.env.GMAIL_ACCOUNT,
+            },
           });
 
           if (user) {
-            await Token.findOneAndDelete({
-              userId: user._id,
+            await Token.destroy({
+              where: {
+                userId: user.id,
+              },
             });
-            user.delete();
+            await user.destroy({
+              where: {
+                id: user.id,
+              },
+            });
           }
 
           resolve(null);

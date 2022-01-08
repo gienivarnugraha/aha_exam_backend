@@ -10,10 +10,12 @@ describe("Authentication", () => {
       cy.visit("/");
 
       cy.get('input[name="email"]').type(Cypress.env("gmailAccount"));
-      cy.get('input[name="password"]').type("admin");
+      cy.get('input[name="password"]').type("Password123!");
       cy.get('button[name="submit"]').click();
 
-      cy.wait("@login").its("response.statusCode").should("eq", 200);
+      cy.wait("@login").its("response.statusCode").should("eq", 201);
+
+      cy.getCookie("access_token").should("exist");
 
       cy.url().should("include", "/user");
 
@@ -31,10 +33,10 @@ describe("Authentication", () => {
 
     cy.get('input[name="name"]').type("test");
     cy.get('input[name="email"]').type(Cypress.env("gmailAccount"));
-    cy.get('input[name="password"]').type("admin");
+    cy.get('input[name="password"]').type("Password123!");
     cy.get('button[name="submit"]').click();
 
-    cy.wait("@register").its("response.statusCode").should("eq", 201);
+    cy.wait("@register").its("response.statusCode").should("eq", 200);
   });
 
   after(() => {

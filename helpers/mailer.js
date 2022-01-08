@@ -1,63 +1,48 @@
 require("dotenv").config();
 
 const nodemailer = require("nodemailer");
-const google = require("googleapis").google;
-const OAuth2 = google.auth.OAuth2;
 
 const config = require("../config/config.js");
 
 const createTransporter = async () => {
-  const oauth2Client = new OAuth2(
-    config.oauth2.client_id,
-    config.oauth2.client_secret,
-    config.oauth2.redirect_uris[0]
-  );
-
-  oauth2Client.setCredentials({
-    refresh_token: config.oauth2.refresh_token,
-  });
-
-  /* const accessToken = await new Promise((resolve, reject) => {
-    try {
-      oauth2Client.getAccessToken((err, token) => {
-        if (err) {
-          reject(err);
-        }
-        resolve(token);
-      });
-    } catch (err) {
-      console.log(err);
-    }
-  }); */
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
+  return nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: {
-      type: "OAuth2",
       user: config.gmail_account,
-      clientId: config.oauth2.client_id,
-      clientSecret: config.oauth2.client_secret,
-      refreshToken: config.oauth2.refresh_token,
-      accessToken: config.oauth2.access_token,
+      pass: config.gmail_secret,
     },
+    logger: true,
+    transactionLog: true,
   });
-
-  return transporter;
 };
 
 const sendMail = ({ subject, content, receiver }) => {
   return new Promise(async (resolve, reject) => {
     try {
+      const htmlContent =
+        "<div style='width: 100%;background-color: #e0e0e0;padding: 30px 0;margin:0 auto'>" +
+        "<div style = 'width: 80%;padding:30px;background-color: blue;margin:0 auto' > " +
+        `<a href="${process.env.CLIENT_URL}/login?token=${content}">` +
+        " <p style = 'margin-bottom: 0px;margin-top: 0px;text-align: center;color:white;font-size: 16px;' > Account Activation</p>" +
+        "</a></div></div>";
+
       let messageOptions = {
         from: "admin <noreply@aha_test.id>",
         to: receiver,
         subject: `${subject}`,
-        html: content,
+        html: htmlContent,
       };
 
       let newTransporter = await createTransporter();
 
-      newTransporter.sendMail(messageOptions, (info) => {
+      newTransporter.sendMail(messageOptions, (err, info) => {
+        if (err) return console.log("err", err);
+
+        console.log("info", info);
+        newTransporter.close();
         return resolve(info);
       });
     } catch (err) {

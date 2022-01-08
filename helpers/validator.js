@@ -1,4 +1,4 @@
-function validatePassword(value) {
+/* function validatePassword(value) {
   let messages = [];
 
   messages[0] =
@@ -12,5 +12,39 @@ function validatePassword(value) {
 
   return messages.filter((msg) => msg !== true);
 }
+ */
+const Validator = require("validatorjs");
 
-module.exports = { validatePassword };
+Validator.register(
+  "contain_digit",
+  function (value) {
+    return /[0-9]/.test(value);
+  },
+  "Should contain numeric character."
+);
+
+Validator.register(
+  "contain_lower",
+  function (value) {
+    return /[a-z]/.test(value);
+  },
+  "Should contain lowercase character."
+);
+
+Validator.register(
+  "contain_upper",
+  function (value) {
+    return /[A-Z]/.test(value);
+  },
+  "Should contain uppercase character."
+);
+
+Validator.register(
+  "contain_special",
+  function (value) {
+    return /[!@#$%^&*]/.test(value);
+  },
+  "Should contain special !@#$%^&* character."
+);
+
+module.exports = Validator;

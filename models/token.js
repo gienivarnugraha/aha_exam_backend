@@ -1,26 +1,43 @@
-const mongoose = require("mongoose");
-const Schema = mongoose.Schema;
+const { Model } = require("sequelize");
 
-const tokenSchema = new Schema(
-  {
-    userId: {
-      type: Schema.Types.ObjectId,
-      required: true,
-      ref: "User",
+module.exports = (sequelize, DataTypes) => {
+  class Token extends Model {
+    /**
+     * Helper method for defining associations.
+     * This method is not a part of Sequelize lifecycle.
+     * The `models/index` file will call this method automatically.
+     */
+    static associate(models) {
+      // define association here
+      Token.belongsTo(models.User);
+    }
+  }
+  Token.init(
+    {
+      id: {
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        allowNull: false,
+        primaryKey: true,
+      },
+      userId: {
+        type: DataTypes.UUID,
+        allowNull: false,
+      },
+      tokenEmail: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
+      createdAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        default: Date.now,
+      },
     },
-    tokenEmail: {
-      type: String,
-      required: true,
-    },
-    createdAt: {
-      type: Date,
-      required: true,
-      default: Date.now,
-      expires: 43200,
-    },
-  },
-  { versionKey: false }
-);
-
-const Token = mongoose.model("Token", tokenSchema);
-module.exports = Token;
+    {
+      sequelize,
+      modelName: "Token",
+    }
+  );
+  return Token;
+};

@@ -1,4 +1,4 @@
 .env
 cypress.env.json
-
+private.json
 node_modules
