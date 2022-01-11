@@ -24,7 +24,17 @@ const server = http.createServer(app);
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
-app.use(cors());
+var corsOptionsDelegate = function (req, callback) {
+  var corsOptions;
+  if (req.header("Origin") === process.env.CLIENT_URL) {
+    corsOptions = { origin: true }; // reflect (enable) the requested origin in the CORS response
+  } else {
+    corsOptions = { origin: false }; // disable CORS for this request
+  }
+  callback(null, corsOptions); // callback expects two parameters: error and options
+};
+
+app.use(cors(corsOptionsDelegate));
 app.use(compression());
 app.use(cookieParser());
 app.use("/", Router);

@@ -7,7 +7,7 @@ module.exports = {
   port: process.env.PORT,
   gmail_account: process.env.GMAIL_ACCOUNT,
   gmail_secret: process.env.GMAIL_SECRET,
-  database: process.env.PG_URI,
+  database: process.env.DATABASE_URL,
   // The credentials and information for OAuth2
   oauth2: {
     client_id: process.env.GOOGLE_CLIENT_ID,
