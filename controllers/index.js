@@ -284,7 +284,7 @@ class Controller {
 
       return res.status(201).json({ accesstoken });
     } catch (error) {
-      next(err);
+      next(error);
     }
   }
 
