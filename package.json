@@ -17,7 +17,9 @@
     "body-parser": "^1.19.1",
     "compression": "^1.7.4",
     "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
     "cross-env": "^7.0.3",
+    "crypto": "^1.0.1",
     "dotenv": "^10.0.0",
     "express-session": "^1.17.2",
     "express": "^4.17.1",
@@ -30,6 +32,7 @@
     "pg-hstore": "^2.3.4",
     "pg": "^8.7.1",
     "sequelize": "^7.0.0-alpha.4",
+    "typescript": "^4.5.4",
     "validatorjs": "^3.22.1"
   },
   "devDependencies": {
@@ -39,11 +42,8 @@
     "@babel/preset-env": "^7.16.5",
     "@typescript-eslint/eslint-plugin": "^5.8.0",
     "@typescript-eslint/parser": "^5.8.0",
-    "cors": "^2.8.5",
-    "crypto": "^1.0.1",
     "eslint": "^7.19.0",
     "eslint-config-google": "^0.14.0",
-    "eslint-config-prettier": "^8.3.0",
-    "typescript": "^4.5.4"
+    "eslint-config-prettier": "^8.3.0"
   }
 }
