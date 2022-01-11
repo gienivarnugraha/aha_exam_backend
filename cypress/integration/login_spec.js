@@ -5,38 +5,67 @@ describe("Authentication", () => {
 
   it("login with email and password", () => {
     cy.task("createUser").then(($user) => {
-      cy.intercept("POST", "/user/login").as("login");
+      cy.intercept("POST", "/login").as("login");
 
-      cy.visit("/");
+      cy.visit("/login");
 
-      cy.get('input[name="email"]').type(Cypress.env("gmailAccount"));
-      cy.get('input[name="password"]').type("Password123!");
-      cy.get('button[name="submit"]').click();
+      cy.get('[data-cy="email"]').type(Cypress.env("gmailAccount"));
+      cy.get('[data-cy="password"]').type("Password123!");
+      cy.get('[data-cy="submit"]').click();
 
-      cy.wait("@login").its("response.statusCode").should("eq", 201);
+      cy.wait("@login").then(({ response }) => {
+        expect(response.statusCode).to.equal(200);
+        expect(response.body).to.have.a.property("accesstoken");
+        expect(response.body).to.have.a.property("user");
+      });
 
-      cy.getCookie("access_token").should("exist");
+      cy.window().its("$nuxt.$auth.state.loggedIn").should("eq", true);
 
-      cy.url().should("include", "/user");
-
-      cy.get("[data-cy='verified-name']").should(
+      cy.get("[data-cy='welcome']").should(
         "have.text",
-        "Welcome to dashboard"
+        "Welcome to dashboard!"
       );
+      cy.get("[data-cy='verified-name']")
+        .get(" .v-list-item__title")
+        .should("contain", $user.name);
+      cy.get("[data-cy='verified-email']").should("contain", $user.email);
     });
   });
 
   it("register using email and password", () => {
-    cy.intercept("POST", "/user/register").as("register");
+    cy.intercept("POST", "/register").as("register");
 
     cy.visit("/register");
 
-    cy.get('input[name="name"]').type("test");
-    cy.get('input[name="email"]').type(Cypress.env("gmailAccount"));
-    cy.get('input[name="password"]').type("Password123!");
-    cy.get('button[name="submit"]').click();
+    cy.get('[data-cy="name"]').type("test");
+    cy.get('[data-cy="email"]').type(Cypress.env("gmailAccount"));
+    cy.get('[data-cy="password"]').type("Password123!");
+    cy.get('[data-cy="password-confirm"]').type("Password123!");
+    cy.get('[data-cy="submit"]').click();
 
-    cy.wait("@register").its("response.statusCode").should("eq", 200);
+    cy.wait("@register").then(({ response }) => {
+      expect(response.statusCode).to.equal(201);
+      expect(response.body.message).to.include(
+        `Verification token has been sent to: ${Cypress.env("gmailAccount")}`
+      );
+      let token = response.body.token;
+
+      cy.get("[data-cy='register-success']").should(
+        "contain",
+        `Verification token has been sent to: ${Cypress.env("gmailAccount")}`
+      );
+
+      cy.task("findToken", token).then(($token) => {
+        console.log("findtoken", $token);
+        cy.request("POST", `${Cypress.env("apiUrl")}/token_verification`, {
+          token: $token,
+        }).then((response) => {
+          console.log(response);
+          expect(response.status).to.eq(200);
+          expect(response.body).to.have.a.property("accesstoken");
+        });
+      });
+    });
   });
 
   after(() => {

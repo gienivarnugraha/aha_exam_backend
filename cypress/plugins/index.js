@@ -4,6 +4,7 @@ const db = require("../../models/index.js");
 const User = db.User;
 const Token = db.Token;
 const { hashPassword } = require("../../helpers/bcrypt.js");
+const { tokenGenerate } = require("../../helpers/jwt.js");
 
 /// <reference types="cypress" />
 // ***********************************************************
@@ -26,67 +27,81 @@ const { hashPassword } = require("../../helpers/bcrypt.js");
 module.exports = (on, config) => {
   // `on` is used to hook into various events Cypress emits
   // `config` is the resolved Cypress config
-  config.baseUrl = "http://localhost:8080";
+  config.baseUrl = process.env.CLIENT_URL;
   config.pageLoadTimeout = 5000;
 
+  config.env.apiUrl = process.env.API_URL;
   config.env.gmailAccount = process.env.GMAIL_ACCOUNT;
   config.env.googleClientId = process.env.GOOGLE_CLIENT_ID;
   config.env.googleClientSecret = process.env.GOOGLE_CLIENT_SECRET;
+  config.env.googleRefreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
   on("task", {
-    createUser() {
-      return new Promise(async (resolve, reject) => {
-        try {
-          const findUser = await User.findOne({
-            where: {
-              email: process.env.GMAIL_ACCOUNT,
-            },
-          });
-
-          if (findUser) {
-            findUser.destroy();
-          }
-
-          const result = await User.create({
-            name: "test",
+    async createUser() {
+      try {
+        const findUser = await User.findOne({
+          where: {
             email: process.env.GMAIL_ACCOUNT,
-            password: hashPassword("Password123!"),
-            isVerified: true,
-          });
+          },
+        });
 
-          resolve(result);
-        } catch (err) {
-          reject(err);
+        if (findUser) {
+          findUser.destroy();
         }
-      });
+
+        const result = await User.create({
+          name: "test",
+          email: process.env.GMAIL_ACCOUNT,
+          password: hashPassword("Password123!"),
+          isVerified: true,
+        });
+
+        return result;
+      } catch (err) {
+        console.log(err);
+      }
     },
-    deleteUser() {
-      return new Promise(async (resolve, reject) => {
-        try {
-          const user = await User.findOne({
+    async createAccessToken(userId) {
+      try {
+        return { accesstoken: tokenGenerate({ id: userId }) };
+      } catch (error) {
+        console.log(error);
+      }
+    },
+    async findToken(tokenEmail) {
+      try {
+        const token = await Token.findOne({ where: { tokenEmail } });
+
+        return token.tokenEmail;
+      } catch (err) {
+        console.log(err);
+      }
+    },
+    async deleteUser() {
+      try {
+        const user = await User.findOne({
+          where: {
+            email: process.env.GMAIL_ACCOUNT,
+          },
+        });
+
+        if (user) {
+          await Token.destroy({
             where: {
-              email: process.env.GMAIL_ACCOUNT,
+              userId: user.id,
             },
           });
-
-          if (user) {
-            await Token.destroy({
-              where: {
-                userId: user.id,
-              },
-            });
-            await user.destroy({
-              where: {
-                id: user.id,
-              },
-            });
-          }
-
-          resolve(null);
-        } catch (err) {
-          reject(err);
+          await user.destroy({
+            where: {
+              id: user.id,
+            },
+          });
         }
-      });
+
+        return null;
+      } catch (err) {
+        console.log(err);
+      }
     },
   });
 

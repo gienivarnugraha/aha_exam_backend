@@ -3,7 +3,7 @@ require("dotenv").config();
 module.exports = {
   // The secret for the encryption of the jsonwebtoken
   JWTsecret: process.env.JWT_SECRET,
-  baseURL: process.env.BASE_URL,
+  apiUrl: process.env.API_URL,
   port: process.env.PORT,
   gmail_account: process.env.GMAIL_ACCOUNT,
   gmail_secret: process.env.GMAIL_SECRET,

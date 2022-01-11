@@ -49,6 +49,8 @@ class Controller {
 
           const accesstoken = tokenGenerate({ id: user.id });
 
+          res.cookie("accesstoken", accesstoken);
+
           return res.status(200).json({ accesstoken, user });
         } else {
           return next({
@@ -104,7 +106,7 @@ class Controller {
       } else {
         return next({
           name: "validationError",
-          message: { errors: { oldPassword: "your old password is wrong!" } },
+          message: { errors: { oldPassword: "Your old password is wrong!" } },
         });
       }
     } catch (error) {
@@ -155,6 +157,7 @@ class Controller {
       res.status(201).json({
         success: true,
         message: `Verification token has been sent to: ${user.email} `,
+        token: token,
       });
     } catch (err) {
       console.log(err);
@@ -194,12 +197,16 @@ class Controller {
           isVerified: true,
         });
       }
+
       await user.update({
         isOnline: true,
       });
+
       await user.increment("loginTimes");
 
       const accesstoken = tokenGenerate({ id: user.id });
+
+      console.log(accesstoken);
 
       return res.status(200).json({ accesstoken });
     } catch (err) {
@@ -225,6 +232,7 @@ class Controller {
         content: token,
         receiver: user.email,
       });
+
       return res.status(201).json({
         message: `Verification token has been sent to: ${user.email} `,
       });
@@ -276,7 +284,7 @@ class Controller {
 
       return res.status(201).json({ accesstoken });
     } catch (error) {
-      console.log(error);
+      next(err);
     }
   }
 
@@ -340,6 +348,7 @@ class Controller {
       });
     }
   }
+
   //* get logged in user data using access_token
   static async getUserData(req, res, next) {
     try {
