@@ -8,13 +8,13 @@ const express = require("express"),
   cors = require("cors"),
   compression = require("compression"),
   cookieParser = require("cookie-parser"),
-  db = require("./models/index.js"),
+  db = require("../models/index.js"),
   session = require("express-session");
 
 // * import express
-require("./models/index.js");
-const Router = require("./routes/index.js");
-const errorHandler = require("./middlewares/errorHandler.js");
+require("../models/index.js");
+const Router = require("../routes/index.js");
+const errorHandler = require("../middlewares/errorHandler.js");
 
 // * start server
 const app = express();
