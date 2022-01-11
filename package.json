@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "test": " npx cypress open ",
-    "build": "cross-env NODE_ENV=production && npm run start",
-    "start": "node ./build/app.js",
+    "build": "cross-env NODE_ENV=production",
+    "start": "npm run build && node ./build/app.js",
     "dev": "cross-env NODE_ENV=development && npx eslint & nodemon babel-node index.js"
   },
   "keywords": [],
