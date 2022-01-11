@@ -6,9 +6,9 @@ const express = require("express"),
   http = require("http"),
   morgan = require("morgan"),
   cors = require("cors"),
+  compression = require("compression"),
   cookieParser = require("cookie-parser"),
   db = require("./models/index.js"),
-  //{ auth } = require("express-openid-connect"),
   session = require("express-session");
 
 // * import express
@@ -21,11 +21,11 @@ const app = express();
 const server = http.createServer(app);
 
 // * use modules
-//app.use(auth());
 app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 
 app.use(cors());
+app.use(compression());
 app.use(cookieParser());
 app.use("/", Router);
 /*
@@ -56,7 +56,6 @@ app.use(
   )
 );
 
-//if (process.env.PRODUCTION === false)
 app.use(errorHandler);
 
 server.listen(process.env.PORT, () => {
