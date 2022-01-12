@@ -11,16 +11,9 @@ const authentication = async (req, res, next) => {
 
       if (!user) {
         return next({
+          status: 404,
           name: "loginError",
           message: "Your account is not found! please register",
-        });
-      }
-
-      if (!user.isVerified) {
-        return next({
-          name: "verificationError",
-          message:
-            "Your email hasn't been verified yet, please check your email",
         });
       } else {
         req.user = user.dataValues;
@@ -31,7 +24,8 @@ const authentication = async (req, res, next) => {
   } catch (error) {
     console.log("auth", error);
     return next({
-      error: true,
+      status: 401,
+      name: "loginError",
       message: "Your session is over, please re-login",
     });
     //next(error);

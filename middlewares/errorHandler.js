@@ -35,8 +35,8 @@ module.exports = (err, req, res, next) => {
       break;
     default:
       status = 500;
-      message = err.message || err.msg || "Internal Server Error";
+      message = err.message || "Internal Server Error";
       break;
   }
-  res.status(status).json({ error: true, message, type });
+  res.status(err.status || status).json({ error: true, message, type });
 };

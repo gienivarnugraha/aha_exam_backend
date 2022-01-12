@@ -33,12 +33,22 @@ class Controller {
 
       if (validation.fails()) {
         return next({
+          status: 403,
           name: "validationError",
           message: validation.errors,
         });
       }
 
       const user = await User.findOne({ where: { email } });
+
+      if (!user.isVerified) {
+        return next({
+          status: 401,
+          name: "verificationError",
+          message:
+            "Your email hasn't been verified yet, please check your email",
+        });
+      }
 
       if (user !== null) {
         if (comparePassword(password, user.password)) {
@@ -54,12 +64,14 @@ class Controller {
           return res.status(200).json({ accesstoken, user });
         } else {
           return next({
+            status: 403,
             name: "validationError",
             message: { errors: { password: "your password is wrong!" } },
           });
         }
       }
       next({
+        status: 404,
         name: "loginError",
         message: "User not found, please register!",
       });
@@ -84,6 +96,7 @@ class Controller {
 
       if (validation.fails()) {
         return next({
+          status: 403,
           name: "validationError",
           message: validation.errors,
         });
@@ -105,12 +118,13 @@ class Controller {
         });
       } else {
         return next({
+          status: 403,
           name: "validationError",
           message: { errors: { oldPassword: "Your old password is wrong!" } },
         });
       }
     } catch (error) {
-      next(error);
+      next({ status: 403, name: "resetPasswordError", message: error });
     }
   }
 
@@ -130,6 +144,7 @@ class Controller {
 
       if (validation.fails()) {
         return next({
+          status: 403,
           name: "validationError",
           message: validation.errors,
         });
@@ -143,10 +158,9 @@ class Controller {
         receiver: email,
       });
 
-      console.log("mailer", mailer);
-
       if (mailer.error) {
         return next({
+          status: 403,
           name: "registerError",
           message: "sending email error",
         });
@@ -171,6 +185,7 @@ class Controller {
     } catch (err) {
       console.log(err);
       return next({
+        status: 403,
         name: "registerError",
         message: "Email already registered",
       });
@@ -187,6 +202,7 @@ class Controller {
 
       if (!dataToken) {
         next({
+          status: 404,
           name: "loginError",
           message: `Couldnt find your authentication token, or your token is expired `,
         });
@@ -196,6 +212,7 @@ class Controller {
 
       if (!user) {
         next({
+          status: 404,
           name: "loginError",
           message: "Your email is not found! Please register",
         });
@@ -215,11 +232,13 @@ class Controller {
 
       const accesstoken = tokenGenerate({ id: user.id });
 
-      console.log(accesstoken);
-
       return res.status(200).json({ accesstoken });
     } catch (err) {
-      next(err);
+      return next({
+        status: 403,
+        name: "loginError",
+        message: "Token error",
+      });
     }
   }
 
@@ -228,6 +247,14 @@ class Controller {
       const { email } = req.body;
 
       const user = await User.findOne({ where: { email } });
+
+      if (user.isVerified) {
+        return next({
+          status: 403,
+          name: "loginError",
+          message: "Your email has been verified!",
+        });
+      }
 
       const token = crypto.randomBytes(16).toString("hex");
 
@@ -260,9 +287,13 @@ class Controller {
       );
 
       req.user = {};
-      res.status(200).json({ message: "success" });
+      res.status(200).json({ success: true, message: "success" });
     } catch (err) {
-      next(err);
+      return next({
+        status: 403,
+        name: "logoutError",
+        message: "Something error",
+      });
     }
   }
 
@@ -293,7 +324,11 @@ class Controller {
 
       return res.status(201).json({ accesstoken });
     } catch (error) {
-      next(error);
+      return next({
+        status: 403,
+        name: "facebookAuthError",
+        message: "Facebook auth error",
+      });
     }
   }
 
@@ -311,6 +346,7 @@ class Controller {
 
         if (!tokens) {
           return next({
+            status: 404,
             error: true,
             message: "token not found!",
           });
@@ -335,6 +371,7 @@ class Controller {
     } catch (error) {
       console.log("error google", error);
       return next({
+        status: 403,
         error: true,
         message: "Something error!",
       });
@@ -349,9 +386,12 @@ class Controller {
 
       await User.update({ name }, { where: { id: user.id } });
 
-      return res.status(200).json({ message: `name changed to: ${name}` });
+      return res
+        .status(200)
+        .json({ success: true, message: `name changed to: ${name}` });
     } catch (err) {
       return next({
+        status: 403,
         error: true,
         message: err,
       });
@@ -363,7 +403,7 @@ class Controller {
     try {
       const { user } = req;
 
-      return res.status(201).json(user);
+      return res.status(200).json(user);
     } catch (err) {
       return next({
         error: true,
