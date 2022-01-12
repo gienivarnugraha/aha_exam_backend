@@ -8,7 +8,7 @@ const createTransporter = async () => {
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false,
+    secure: true,
     requireTLS: true,
     auth: {
       user: config.gmail_account,
@@ -39,7 +39,7 @@ const sendMail = ({ subject, content, receiver }) => {
       let newTransporter = await createTransporter();
 
       newTransporter.sendMail(messageOptions, (err, info) => {
-        if (err) return console.log("err", err);
+        if (err) return reject("err", err);
 
         console.log("info", info);
         newTransporter.close();

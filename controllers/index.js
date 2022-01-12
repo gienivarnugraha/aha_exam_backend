@@ -137,6 +137,21 @@ class Controller {
 
       const token = crypto.randomBytes(16).toString("hex");
 
+      const mailer = await sendMail({
+        subject: "Activation token",
+        content: token,
+        receiver: email,
+      });
+
+      console.log("mailer", mailer);
+
+      if (!mailer) {
+        return next({
+          name: "registerError",
+          message: "sending email error",
+        });
+      }
+
       const user = await User.create({
         name,
         email,
@@ -146,12 +161,6 @@ class Controller {
       await Token.create({
         userId: user.id,
         tokenEmail: token,
-      });
-
-      await sendMail({
-        subject: "Activation token",
-        content: token,
-        receiver: user.email,
       });
 
       res.status(201).json({
