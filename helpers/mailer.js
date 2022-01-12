@@ -7,13 +7,11 @@ const config = require("../config/config.js");
 const createTransporter = async () => {
   return nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 587,
+    port: 465,
     secure: true,
-    //requireTLS: true,
     auth: {
-      //user: config.gmail_account,
-      //pass: config.gmail_secret,
       type: "OAuth2",
+      user: config.gmail_account,
       clientId: config.oauth2.client_id,
       clientSecret: config.oauth2.client_secret,
       refreshToken: config.oauth2.refresh_token,
@@ -45,9 +43,9 @@ const sendMail = ({ subject, content, receiver }) => {
       let newTransporter = await createTransporter();
 
       newTransporter.sendMail(messageOptions, (err, info) => {
-        if (err) return reject("err cb", { error: true, message: err });
+        if (err) return reject({ error: true, message: err });
         newTransporter.close();
-        return resolve(info);
+        return resolve({ success: true, message: info });
       });
     } catch (err) {
       console.log("err catch", err);
