@@ -145,7 +145,7 @@ class Controller {
 
       console.log("mailer", mailer);
 
-      if (!mailer) {
+      if (mailer.error) {
         return next({
           name: "registerError",
           message: "sending email error",
