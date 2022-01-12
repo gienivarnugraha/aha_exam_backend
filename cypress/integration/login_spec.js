@@ -32,7 +32,7 @@ describe("Authentication", () => {
     });
   });
 
-  it("register using email and password", () => {
+  it("register using email and password then verify the token and login", () => {
     cy.intercept("POST", "/register").as("register");
 
     cy.visit("/register");

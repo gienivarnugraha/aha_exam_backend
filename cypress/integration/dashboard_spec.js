@@ -42,7 +42,7 @@ describe("testing password reset", () => {
         cy.get('[data-cy="submit"]').click();
 
         cy.wait("@reset").then(({ response }) => {
-          expect(response.statusCode).to.eq(400);
+          expect(response.statusCode).to.eq(403);
           expect(response.body.error).to.eq(true);
           expect(response.body.message.errors).to.have.property(
             "confirmPassword"
@@ -69,7 +69,7 @@ describe("testing password reset", () => {
         cy.get('[data-cy="submit"]').click();
 
         cy.wait("@reset").then(({ response }) => {
-          expect(response.statusCode).to.eq(400);
+          expect(response.statusCode).to.eq(403);
           expect(response.body.error).to.eq(true);
           expect(response.body.message.errors).to.have.property("oldPassword");
         });
@@ -91,7 +91,7 @@ describe("testing password reset", () => {
         cy.get('[data-cy="submit"]').click();
 
         cy.wait("@reset").then(({ response }) => {
-          expect(response.statusCode).to.eq(400);
+          expect(response.statusCode).to.eq(403);
           expect(response.body.error).to.eq(true);
           expect(response.body.message.errors).to.have.property("newPassword");
         });
