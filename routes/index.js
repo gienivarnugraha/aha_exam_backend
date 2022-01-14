@@ -20,7 +20,7 @@ router.post("/auth/google/", Controller.googleAuthCallback);
 
 router.post("/auth/facebook", Controller.facebookAuthCallback);
 
-router.post("/token_verification/", Controller.tokenVerification);
+router.post("/token_verification", Controller.tokenVerification);
 
 router.post("/register", Controller.register);
 
@@ -32,8 +32,12 @@ router.put("/reset_password", authentication, Controller.resetPassword);
 
 router.get("/user", authentication, Controller.getUserData);
 
+router.get("/users", authentication, Controller.getAllUser);
+
 router.put("/user", authentication, Controller.changeUserData);
 
 router.get("/logout", authentication, Controller.logout);
+
+router.get("/seed", Controller.seedUsers);
 
 module.exports = router;

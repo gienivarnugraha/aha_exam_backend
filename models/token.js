@@ -28,13 +28,9 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
-      createdAt: {
-        type: DataTypes.DATE,
-        allowNull: false,
-        default: Date.now,
-      },
     },
     {
+      underscored: true,
       sequelize,
       modelName: "Token",
     }

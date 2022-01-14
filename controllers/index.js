@@ -1,6 +1,7 @@
 // * Import modules
 const crypto = require("crypto");
 const axios = require("axios");
+const moment = require("moment");
 
 const { google } = require("googleapis");
 
@@ -13,6 +14,8 @@ const Validator = require("../helpers/validator.js");
 const { findOrCreateUser } = require("../helpers/db.js");
 
 // * Import Models
+const { sequelize } = require("../models/index.js");
+const { Op, QueryTypes } = require("sequelize");
 const User = require("../models/index.js").User;
 const Token = require("../models/index.js").Token;
 
@@ -54,6 +57,7 @@ class Controller {
         if (comparePassword(password, user.password)) {
           await user.update({
             isOnline: true,
+            lastSession: moment(),
           });
           await user.increment("loginTimes");
 
@@ -281,10 +285,7 @@ class Controller {
     try {
       let user = req.user;
 
-      await User.update(
-        { isOnline: false, lastSession: Date.now() },
-        { where: { id: user.id } }
-      );
+      await User.update({ isOnline: false }, { where: { id: user.id } });
 
       req.user = {};
       res.status(200).json({ success: true, message: "success" });
@@ -378,6 +379,64 @@ class Controller {
     }
   }
 
+  static async getAllUser(req, res, next) {
+    try {
+      const users = await User.findAndCountAll({
+        attributes: [
+          "name",
+          "email",
+          "lastSession",
+          "loginTimes",
+          "isOnline",
+          "createdAt",
+        ],
+        nest: true,
+        order: [["lastSession", "DESC"]],
+      });
+
+      const average = await sequelize.query(
+        `SELECT AVG(n1.active_users_perday)::numeric(10,2) as value
+          FROM (
+              SELECT
+                DATE(last_session) AS active_date,
+                COUNT('active_date') AS active_users_perday
+              FROM users
+              WHERE date(last_session) > CURRENT_DATE - 7
+              GROUP BY date(last_session)
+              ORDER BY date(last_session) DESC
+          ) as n1`,
+        {
+          plain: true,
+          type: QueryTypes.SELECT,
+          nest: true,
+        }
+      );
+
+      const activeToday = await User.count({
+        where: {
+          [Op.and]: [
+            {
+              isOnline: true,
+            },
+            {
+              lastSession: sequelize.literal(
+                " DATE(last_session) = CURRENT_DATE "
+              ),
+            },
+          ],
+        },
+      });
+
+      return res.status(200).json({ average, activeToday, users });
+    } catch (err) {
+      return next({
+        status: 403,
+        error: true,
+        message: err,
+      });
+    }
+  }
+
   //* get logged in user data using access_token
   static async changeUserData(req, res, next) {
     try {
@@ -409,6 +468,47 @@ class Controller {
         error: true,
         message: err,
       });
+    }
+  }
+
+  static async seedUsers(req, res, next) {
+    try {
+      const chance = require("chance").Chance();
+
+      const getRandomInt = (max) => Math.floor(Math.random() * max);
+
+      const length = (length) => Array.from({ length }, (v, i) => i);
+
+      let faker = [];
+      for await (const index of length(10)) {
+        faker[index] = {
+          name: chance.name(),
+          email: chance.email(),
+          isVerified: true,
+          password: hashPassword("Password123!"),
+          lastSession: chance.date({
+            day: getRandomInt(10),
+            month: 0,
+            year: 2022,
+          }),
+          loginTimes: chance.integer({ min: 1, max: 20 }),
+          createdAt: chance.date({
+            day: getRandomInt(3),
+            month: 0,
+            year: 2022,
+          }),
+          updatedAt: chance.date({
+            day: getRandomInt(3),
+            month: 0,
+            year: 2022,
+          }),
+        };
+      }
+      const result = await User.bulkCreate(faker, { returning: true });
+
+      return res.json(result);
+    } catch (error) {
+      console.log(error);
     }
   }
 }

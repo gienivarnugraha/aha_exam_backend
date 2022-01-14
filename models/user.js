@@ -62,6 +62,7 @@ module.exports = (sequelize, DataTypes) => {
       avatar: DataTypes.STRING,
     },
     {
+      underscored: true,
       sequelize,
       modelName: "User",
     }
