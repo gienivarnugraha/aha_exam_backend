@@ -2,7 +2,6 @@
 const crypto = require("crypto");
 const axios = require("axios");
 const moment = require("moment");
-
 const { google } = require("googleapis");
 
 // * Import helpers
@@ -29,10 +28,10 @@ class Controller {
       let rules = {
         email: "required|email",
         password:
-          "required|contain_lower|contain_upper|contain_special|contain_digit|min:8",
+          "required|contain_lower|contain_upper|contain_special|contain_digit|min:8", // custom validator from validator helpers
       };
 
-      let validation = new Validator(req.body, rules);
+      let validation = new Validator(req.body, rules); // from validator helpers
 
       if (validation.fails()) {
         return next({
@@ -56,14 +55,15 @@ class Controller {
       if (user !== null) {
         if (comparePassword(password, user.password)) {
           await user.update({
-            isOnline: true,
-            lastSession: moment(),
+            isOnline: true, // set uesr to online
+            lastSession: moment(), // set last session to Now()
           });
-          await user.increment("loginTimes");
 
-          const accesstoken = tokenGenerate({ id: user.id });
+          await user.increment("loginTimes"); // increment login times
 
-          res.cookie("accesstoken", accesstoken);
+          const accesstoken = tokenGenerate({ id: user.id }); //generate acces token
+
+          res.cookie("accesstoken", accesstoken); //set cookie
 
           return res.status(200).json({ accesstoken, user });
         } else {
@@ -91,9 +91,9 @@ class Controller {
       let rules = {
         oldPassword: "required",
         newPassword:
-          "required|different:oldPassword|contain_lower|contain_upper|contain_special|contain_digit|min:8",
+          "required|different:oldPassword|contain_lower|contain_upper|contain_special|contain_digit|min:8", // from custom validtor helper
         confirmPassword:
-          "required|same:newPassword|contain_lower|contain_upper|contain_special|contain_digit|min:8",
+          "required|same:newPassword|contain_lower|contain_upper|contain_special|contain_digit|min:8", // from custom validtor helper
       };
 
       let validation = new Validator(req.body, rules);
@@ -158,7 +158,7 @@ class Controller {
 
       const mailer = await sendMail({
         subject: "Activation token",
-        content: token,
+        content: token, // sent activation token to user email
         receiver: email,
       });
 
@@ -196,12 +196,13 @@ class Controller {
     }
   }
 
+  // * verify token sent to the user email
   static async tokenVerification(req, res, next) {
     try {
       const { token } = req.body;
 
       const dataToken = await Token.findOne({
-        where: { tokenEmail: token },
+        where: { tokenEmail: token }, // * match token sent to the email with database
       });
 
       if (!dataToken) {
@@ -224,17 +225,18 @@ class Controller {
 
       if (!user.isVerified) {
         await user.update({
-          isVerified: true,
+          isVerified: true, // set user verified to true if user is not verified
         });
       }
 
       await user.update({
+        // if user is verified, then set online to true and increment logintimes
         isOnline: true,
       });
 
       await user.increment("loginTimes");
 
-      const accesstoken = tokenGenerate({ id: user.id });
+      const accesstoken = tokenGenerate({ id: user.id }); // generate access token
 
       return res.status(200).json({ accesstoken });
     } catch (err) {
@@ -285,9 +287,9 @@ class Controller {
     try {
       let user = req.user;
 
-      await User.update({ isOnline: false }, { where: { id: user.id } });
+      await User.update({ isOnline: false }, { where: { id: user.id } }); // set online to false
 
-      req.user = {};
+      req.user = {}; // clear user request
       res.status(200).json({ success: true, message: "success" });
     } catch (err) {
       return next({
@@ -298,6 +300,7 @@ class Controller {
     }
   }
 
+  // * facebook auth callback
   static async facebookAuthCallback(req, res, next) {
     try {
       const { code } = req.body;
@@ -333,7 +336,7 @@ class Controller {
     }
   }
 
-  // Callback from google auth page
+  // * google auth callback
   static async googleAuthCallback(req, res, next) {
     try {
       if (req.body.error) {
@@ -379,8 +382,10 @@ class Controller {
     }
   }
 
+  // * get all users from the database, with average and active today
   static async getAllUser(req, res, next) {
     try {
+      //* find and count all user registered
       const users = await User.findAndCountAll({
         attributes: [
           "name",
@@ -394,6 +399,7 @@ class Controller {
         order: [["lastSession", "DESC"]],
       });
 
+      // * get average user registered on the last week
       const average = await sequelize.query(
         `SELECT AVG(n1.active_users_perday)::numeric(10,2) as value
           FROM (
@@ -412,6 +418,7 @@ class Controller {
         }
       );
 
+      // * count active user (isOnline) today
       const activeToday = await User.count({
         where: {
           [Op.and]: [
@@ -437,13 +444,13 @@ class Controller {
     }
   }
 
-  //* get logged in user data using access_token
+  //* change uuser name
   static async changeUserData(req, res, next) {
     try {
       const { user } = req;
       const { name } = req.body;
 
-      await User.update({ name }, { where: { id: user.id } });
+      await User.update({ name }, { where: { id: user.id } }); // update user name
 
       return res
         .status(200)
@@ -471,13 +478,14 @@ class Controller {
     }
   }
 
+  // * seed user
   static async seedUsers(req, res, next) {
     try {
       const chance = require("chance").Chance();
 
       const getRandomInt = (max) => Math.floor(Math.random() * max);
 
-      const length = (length) => Array.from({ length }, (v, i) => i);
+      const length = (length) => Array.from({ length }, (v, i) => i); // *set number of user faker
 
       let faker = [];
       for await (const index of length(10)) {
